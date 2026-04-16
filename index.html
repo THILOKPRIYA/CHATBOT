@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PolicyLens — AI Policy Adaptation Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ── Reset & Base ─────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: #f5f2eb;
+  color: #0f0f14;
+  min-height: 100vh;
+}
+
+/* ── Header ──────────────────────────────────── */
+.app-header {
+  background: #0f0f14;
+  color: #f5f2eb;
+  padding: 16px 32px;
+  border-bottom: 3px solid #c8392b;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.55rem;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: #f5f2eb;
+}
+.app-logo span { color: #c8392b; }
+.app-sub {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  color: #a0a0b0;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+}
+
+/* ── Layout ──────────────────────────────────── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding: 24px 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Panel ───────────────────────────────────── */
+.panel { background: #f5f2eb; }
+.panel-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  color: #6b6660;
+  margin-bottom: 2px;
+}
+.panel-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f0f14;
+  border-bottom: 2px solid #0f0f14;
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+}
+
+/* ── Section labels ──────────────────────────── */
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: #6b6660;
+  margin-bottom: 6px;
+  margin-top: 14px;
+}
+
+/* ── Notice ──────────────────────────────────── */
+.notice {
+  background: #ede9de;
+  border-left: 3px solid #b8953a;
+  padding: 9px 13px;
+  font-size: 0.78rem;
+  color: #6b6660;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* ── Inputs ──────────────────────────────────── */
+textarea, input[type="text"], select {
+  width: 100%;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.82rem;
+  border: 1px solid #d4cfc5;
+  border-radius: 0;
+  padding: 8px 10px;
+  background: white;
+  color: #0f0f14;
+  outline: none;
+  transition: border-color 0.15s;
+}
+textarea:focus, input[type="text"]:focus, select:focus {
+  border-color: #1a3a5c;
+}
+textarea { resize: vertical; }
+
+/* ── Buttons ─────────────────────────────────── */
+.btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border: none;
+  border-radius: 0;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  width: 100%;
+}
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary { background: #1a3a5c; color: #f5f2eb; }
+.btn-secondary { background: #ede9de; color: #0f0f14; border: 1px solid #d4cfc5; }
+.btn-danger { background: #c8392b; color: #f5f2eb; }
+.btn-sm { padding: 6px 10px; font-size: 0.62rem; }
+.btn-green { background: #2d6a4f; color: white; }
+
+.btn-row { display: grid; grid-template-columns: 2fr 2fr 1.5fr; gap: 8px; margin-top: 10px; }
+.btn-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+
+/* ── File upload ─────────────────────────────── */
+.upload-zone {
+  border: 1.5px dashed #d4cfc5;
+  background: white;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+.upload-zone:hover { border-color: #1a3a5c; background: #f0f4f9; }
+.upload-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.upload-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  color: #6b6660;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  pointer-events: none;
+}
+.file-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #f2f8f5;
+  border: 1px solid #d4cfc5;
+  border-left: 3px solid #2d6a4f;
+  padding: 4px 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  color: #0f0f14;
+  margin-bottom: 8px;
+}
+
+/* ── Summary card ────────────────────────────── */
+hr { border: none; border-top: 1px solid #d4cfc5; margin: 20px 0; }
+.summary-card {
+  background: white;
+  border: 1px solid #d4cfc5;
+  border-left: 3px solid #1a3a5c;
+  padding: 16px 18px;
+  margin-top: 10px;
+}
+.summary-section-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #c8392b;
+  margin-bottom: 5px;
+  margin-top: 12px;
+}
+.summary-section-title:first-child { margin-top: 0; }
+.summary-text { font-size: 0.84rem; line-height: 1.65; color: #0f0f14; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  padding: 2px 7px;
+  background: #ede9de;
+  border: 1px solid #d4cfc5;
+  color: #0f0f14;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.placeholder-text { font-size: 0.8rem; color: #a0a0b0; font-style: italic; margin-top: 8px; }
+
+/* ── Scenario card ───────────────────────────── */
+.scenario-card {
+  background: white;
+  border: 1px solid #d4cfc5;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.scenario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.scenario-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #6b6660;
+}
+.scenario-title-text {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f0f14;
+  margin-bottom: 12px;
+  margin-top: 2px;
+}
+.scenario-chevron { font-size: 0.75rem; color: #6b6660; transition: transform 0.2s; }
+.scenario-chevron.open { transform: rotate(180deg); }
+.scenario-body { display: none; }
+.scenario-body.expanded { display: block; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+@media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } }
+
+/* ── Output box ──────────────────────────────── */
+.output-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #2d6a4f;
+  margin: 10px 0 4px;
+}
+.output-box {
+  background: #faf8f3;
+  border: 1px solid #d4cfc5;
+  border-left: 2px solid #b8953a;
+  padding: 14px 16px;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: #0f0f14;
+  white-space: pre-wrap;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+/* ── Spinner ─────────────────────────────────── */
+.spinner-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15,15,20,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+  display: none;
+}
+.spinner-box {
+  background: white;
+  border-left: 3px solid #c8392b;
+  padding: 20px 28px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #0f0f14;
+  display: flex; align-items: center; gap: 12px;
+}
+.spinner-dot {
+  width: 10px; height: 10px;
+  background: #c8392b;
+  animation: pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes pulse { from { opacity: 0.2; } to { opacity: 1; } }
+
+/* ── Toast ───────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #0f0f14;
+  color: #f5f2eb;
+  padding: 10px 16px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s, transform 0.25s;
+  max-width: 340px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.error { border-left: 3px solid #c8392b; }
+.toast.success { border-left: 3px solid #2d6a4f; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="app-logo">Policy<span>Lens</span></div>
+  <div class="app-sub">AI Policy Adaptation Studio'[JDT]</div>
+</header>
+
+<!-- Spinner overlay -->
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner-box">
+    <div class="spinner-dot"></div>
+    <span id="spinner-msg">Processing…</span>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Main grid -->
+<div class="main-grid">
+
+  <!-- ════════════ LEFT PANEL ════════════ -->
+  <div class="panel" id="left-panel">
+    <div class="panel-label">Module 01</div>
+
+    <!-- Upload zone -->
+    <div class="section-label">Upload Policy File</div>
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".pdf,.txt" />
+      <div class="upload-label">↑ &nbsp;Drag & drop or click to upload a PDF or TXT file</div>
+    </div>
+    <div id="file-pill-wrap"></div>
+
+    <!-- Text area -->
+    <div class="section-label">Policy Text</div>
+    <textarea id="policy-text" rows="14" placeholder="Paste or type policy text here…">{{ default_policy }}</textarea>
+
+    <!-- Buttons -->
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-summarise">▶ Generate Summary</button>
+      <button class="btn btn-secondary" id="btn-load-default">↺ Load Default Policy</button>
+      <button class="btn btn-secondary" id="btn-clear">✕ Clear</button>
+    </div>
+
+    <!-- Divider -->
+    <hr />
+    <div class="section-label">Generated Summary</div>
+
+    <div id="summary-output">
+      <p class="placeholder-text">A structured summary will appear here after analysis — covering goals, key measures, and overall policy direction.</p>
+    </div>
+  </div>
+
+  <!-- ════════════ RIGHT PANEL ════════════ -->
+  <div class="panel" id="right-panel">
+    <div class="panel-label">Module 02</div>
+    <div class="panel-title">Scenario-Based Policy Generation</div>
+
+    <!-- Scenario 1 -->
+    <div class="scenario-card" id="card-1">
+      <div class="scenario-header" onclick="toggleScenario(1)">
+        <div>
+          <div class="scenario-num">Scenario 01</div>
+          <div class="scenario-title-text">Rural Communities &amp; Digital Inclusion</div>
+        </div>
+        <div class="scenario-chevron open" id="chev-1">▾</div>
+      </div>
+      <div class="scenario-body expanded" id="body-1">
+        <div class="field-row">
+          <div>
+            <div class="section-label">Scenario Title</div>
+            <input type="text" id="s1_title" value="Rural Communities &amp; Digital Inclusion" />
+          </div>
+          <div>
+            <div class="section-label">Target Audience</div>
+            <input type="text" id="s1_audience" value="Rural citizens, local government, community leaders" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <div class="section-label">Primary Focus</div>
+            <select id="s1_focus">
+              <option>Awareness &amp; Digital Literacy</option>
+              <option>Governance &amp; Legislation</option>
+              <option>Workforce Development</option>
+              <option>Critical Infrastructure Protection</option>
+              <option>Public-Private Partnerships</option>
+            </select>
+          </div>
+          <div>
+            <div class="section-label">Key Constraint</div>
+            <input type="text" id="s1_constraint" value="Limited internet access, low digital literacy, resource constraints" />
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="generateScenario(1)">Generate Draft 01</button>
+        <div id="output-1"></div>
+      </div>
+    </div>
+
+    <!-- Scenario 2 -->
+    <div class="scenario-card" id="card-2">
+      <div class="scenario-header" onclick="toggleScenario(2)">
+        <div>
+          <div class="scenario-num">Scenario 02</div>
+          <div class="scenario-title-text">Financial Sector Resilience</div>
+        </div>
+        <div class="scenario-chevron open" id="chev-2">▾</div>
+      </div>
+      <div class="scenario-body expanded" id="body-2">
+        <div class="field-row">
+          <div>
+            <div class="section-label">Scenario Title</div>
+            <input type="text" id="s2_title" value="Financial Sector Resilience" />
+          </div>
+          <div>
+            <div class="section-label">Target Audience</div>
+            <input type="text" id="s2_audience" value="Banks, fintech firms, financial regulators, payment processors" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <div class="section-label">Primary Focus</div>
+            <select id="s2_focus">
+              <option>Awareness &amp; Digital Literacy</option>
+              <option>Governance &amp; Legislation</option>
+              <option>Workforce Development</option>
+              <option selected>Critical Infrastructure Protection</option>
+              <option>Public-Private Partnerships</option>
+            </select>
+          </div>
+          <div>
+            <div class="section-label">Key Constraint</div>
+            <input type="text" id="s2_constraint" value="High-value targets, regulatory compliance, cross-border threats, 24/7 operations" />
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="generateScenario(2)">Generate Draft 02</button>
+        <div id="output-2"></div>
+      </div>
+    </div>
+
+    <!-- Scenario 3 (hidden by default) -->
+    <div class="scenario-card" id="card-3" style="display:none">
+      <div class="scenario-header" onclick="toggleScenario(3)">
+        <div>
+          <div class="scenario-num">Scenario 03</div>
+          <div class="scenario-title-text">Youth &amp; Educational Institutions</div>
+        </div>
+        <div class="scenario-chevron open" id="chev-3">▾</div>
+      </div>
+      <div class="scenario-body expanded" id="body-3">
+        <div class="field-row">
+          <div>
+            <div class="section-label">Scenario Title</div>
+            <input type="text" id="s3_title" value="Youth &amp; Educational Institutions" />
+          </div>
+          <div>
+            <div class="section-label">Target Audience</div>
+            <input type="text" id="s3_audience" value="Students, teachers, school administrators, universities" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div>
+            <div class="section-label">Primary Focus</div>
+            <select id="s3_focus">
+              <option>Awareness &amp; Digital Literacy</option>
+              <option>Governance &amp; Legislation</option>
+              <option selected>Workforce Development</option>
+              <option>Critical Infrastructure Protection</option>
+              <option>Public-Private Partnerships</option>
+            </select>
+          </div>
+          <div>
+            <div class="section-label">Key Constraint</div>
+            <input type="text" id="s3_constraint" value="Age-appropriate content, limited budgets, need for engaging curriculum" />
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px" onclick="generateScenario(3)">Generate Draft 03</button>
+        <div id="output-3"></div>
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- Bottom actions -->
+    <div class="btn-row-2">
+      <button class="btn btn-primary" id="btn-gen-all">▶▶ Generate All Scenarios</button>
+      <button class="btn btn-secondary" id="btn-add-s3">+ Add Scenario 3</button>
+    </div>
+  </div>
+
+</div><!-- /.main-grid -->
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let summaryData = null;
+const DEFAULT_POLICY = {{ default_policy | tojson }};
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function showSpinner(msg) {
+  document.getElementById('spinner-msg').textContent = msg || 'Processing…';
+  document.getElementById('spinner').style.display = 'flex';
+}
+function hideSpinner() {
+  document.getElementById('spinner').style.display = 'none';
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+async function apiFetch(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
+// ── Toggle scenario collapse ───────────────────────────────────────────────────
+function toggleScenario(num) {
+  const body = document.getElementById('body-' + num);
+  const chev = document.getElementById('chev-' + num);
+  body.classList.toggle('expanded');
+  chev.classList.toggle('open');
+}
+
+// ── File upload ───────────────────────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.size > 200 * 1024 * 1024) { showToast('File exceeds 200 MB limit.', 'error'); return; }
+
+  showSpinner('Reading file…');
+  const form = new FormData();
+  form.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); return; }
+    document.getElementById('policy-text').value = data.text;
+    summaryData = null;
+    renderSummary(null);
+    clearAllOutputs();
+    document.getElementById('file-pill-wrap').innerHTML =
+      `<div class="file-pill">✓ &nbsp;${data.filename}</div>`;
+    showToast('File loaded successfully.', 'success');
+  } catch (e) {
+    showToast('Upload failed: ' + e.message, 'error');
+  } finally {
+    hideSpinner();
+  }
+});
+
+// ── Summarise ─────────────────────────────────────────────────────────────────
+document.getElementById('btn-summarise').addEventListener('click', async function () {
+  const text = document.getElementById('policy-text').value.trim();
+  if (!text) { showToast('Please enter or load a policy text first.', 'error'); return; }
+
+  showSpinner('Analysing policy…');
+  try {
+    const data = await apiFetch('/api/summarise', { text });
+    if (data.error) { showToast(data.error, 'error'); return; }
+    summaryData = data.summary;
+    renderSummary(summaryData);
+    clearAllOutputs();
+    showToast('Summary generated.', 'success');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    hideSpinner();
+  }
+});
+
+function renderSummary(s) {
+  const el = document.getElementById('summary-output');
+  if (!s) {
+    el.innerHTML = '<p class="placeholder-text">A structured summary will appear here after analysis — covering goals, key measures, and overall policy direction.</p>';
+    return;
+  }
+  const tags = (s.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+  el.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-section-title">▸ Main Goals</div>
+      <div class="summary-text">${s.goals || ''}</div>
+      <div class="summary-section-title">▸ Key Measures &amp; Strategies</div>
+      <div class="summary-text">${s.measures || ''}</div>
+      <div class="summary-section-title">▸ Overall Direction</div>
+      <div class="summary-text">${s.direction || ''}</div>
+      <div class="summary-section-title">▸ Key Themes</div>
+      <div class="tag-row">${tags}</div>
+    </div>`;
+}
+
+// ── Load default / clear ──────────────────────────────────────────────────────
+document.getElementById('btn-load-default').addEventListener('click', () => {
+  document.getElementById('policy-text').value = DEFAULT_POLICY;
+  document.getElementById('file-pill-wrap').innerHTML = '';
+  summaryData = null;
+  renderSummary(null);
+  clearAllOutputs();
+});
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  document.getElementById('policy-text').value = '';
+  document.getElementById('file-pill-wrap').innerHTML = '';
+  summaryData = null;
+  renderSummary(null);
+  clearAllOutputs();
+});
+
+// ── Generate single scenario ──────────────────────────────────────────────────
+async function generateScenario(num) {
+  if (!summaryData) { showToast('Generate a policy summary first (left panel).', 'error'); return; }
+  const title      = document.getElementById(`s${num}_title`).value.trim();
+  const audience   = document.getElementById(`s${num}_audience`).value.trim();
+  const focus      = document.getElementById(`s${num}_focus`).value.trim();
+  const constraint = document.getElementById(`s${num}_constraint`).value.trim();
+
+  showSpinner(`Drafting Scenario 0${num}…`);
+  try {
+    const data = await apiFetch('/api/generate-scenario', { summary: summaryData, title, audience, focus, constraint });
+    if (data.error) { showToast(data.error, 'error'); return; }
+    renderOutput(num, data.draft);
+    showToast(`Scenario 0${num} draft ready.`, 'success');
+  } catch (e) {
+    showToast('Error: ' + e.message, 'error');
+  } finally {
+    hideSpinner();
+  }
+}
+
+function renderOutput(num, draft) {
+  const el = document.getElementById('output-' + num);
+  const blob = new Blob([draft], { type: 'text/plain' });
+  const url  = URL.createObjectURL(blob);
+  el.innerHTML = `
+    <div class="output-label">● Draft Generated</div>
+    <div class="output-box">${escapeHtml(draft)}</div>
+    <a href="${url}" download="policy_draft_scenario_${num}.txt">
+      <button class="btn btn-green btn-sm" style="margin-top:8px">↓ Download Draft</button>
+    </a>`;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function clearAllOutputs() {
+  [1, 2, 3].forEach(n => { document.getElementById('output-' + n).innerHTML = ''; });
+}
+
+// ── Generate all scenarios ────────────────────────────────────────────────────
+document.getElementById('btn-gen-all').addEventListener('click', async () => {
+  if (!summaryData) { showToast('Generate a policy summary first (left panel).', 'error'); return; }
+  const s3visible = document.getElementById('card-3').style.display !== 'none';
+  const nums = s3visible ? [1, 2, 3] : [1, 2];
+  for (const n of nums) {
+    await generateScenario(n);
+  }
+});
+
+// ── Add Scenario 3 ────────────────────────────────────────────────────────────
+document.getElementById('btn-add-s3').addEventListener('click', () => {
+  const card = document.getElementById('card-3');
+  card.style.display = 'block';
+  document.getElementById('btn-add-s3').style.display = 'none';
+});
+</script>
+</body>
+</html>
